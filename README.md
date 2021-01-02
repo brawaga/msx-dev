@@ -4,3 +4,7 @@ There I will publish all utils for MSX-DOS I have to implement due they are abse
 
 # LESS
 The only parameter is being interpreted as a file name which is opened and paged on the screen. System hangs if you pass non-existing file (Why?), so be careful.
+
+# PAD
+Pads file given as the only parameter to 16kB boundary with FF byte. This is useful to prepare ROM files.
+
