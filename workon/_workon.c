@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <bdosfunc.h>
 
-char *constPaths = "paths:";
 char *constCreate = "_CREATE.BAT";
 char *constMask = "*.*";
-
 
 char chdrv(no)
 	char no;
@@ -27,7 +25,8 @@ char chpdrv(path)
 }
 
 char *strchrs(s, cs)
-	char *s, *cs;
+	char *s;
+	char *cs;
 {
 	char *ss = s;
 	char *css = cs;
@@ -49,7 +48,24 @@ char smartClose(f)
 	}
 }
 
-char serveDir(newdir, files, create, commit)
+char detectPartition(line)
+	char *line;
+{
+	char *partsRaw="includes\0paths";
+	char cand, *l, *p;	
+	cand = (char)0;
+	while (cand < 2) {
+		l=line;
+		p=(char *)partsRaw+(cand*9);
+		while(*l && *p && *l==*p) {++l; ++p;}
+		if (*p==(char)0 && *l==':') return cand;
+		++cand;
+	}
+	return cand;
+}
+
+char serveDir(isproject, newdir, files, create, commit)
+	char isproject;	
 	char *newdir;
 	int *files;
 	FILE *create, *commit;
@@ -77,7 +93,7 @@ char serveDir(newdir, files, create, commit)
 				newdir, finfo.name, finfo.name
 			);
 			/* Rewriting project files only */
-			if (eof) fprintf(
+			if (isproject) fprintf(
 				commit,
 				"echo copying %d\ncopy /P h:%s %s\\$.$\ndel /P %s\\%s\nren /P %s\\$.$ %s\n",
 				*files,
@@ -104,40 +120,30 @@ int main(argc, argv)
 	char line[65];
 	char olddrv = *((char*)4);
 	char newdrv;
-	char eof;
+	char neof;
+	char state=3;
 	int files=0;
 
-	olddir[64] = (char)0;
-	newdir[64] = (char)0;
-	line[64] = (char)0;
+	olddir[64]=newdir[64]=line[64]=(char)0;
 	chpdrv(argv[1]);
 	getcwd(olddir, 64);
 	chdir(argv[1]);
 	getcwd(newdir, 64);
 	
-	create = fopen(*constCreate, "wt");
+	create = fopen(constCreate, "wt");
 	commit = fopen("h:endwork.bat", "wt");
 	config = fopen("project.cfg", "rt");  /* No real YAML support yet */
 	if (create && commit) {
 		if (config) {
-			fgets(line, 65, config);
-
-			/* Expect triple dash */
-			eof = 1;
-			if (0==strncmp(line, "---", 3)) {
-				while (!(eof=0==fgets(line, 65, config))) {       			
-					if (strncmp(line, constPaths, 6)==0) break;
-				}
-			}
-			if (eof) smartClose(&config);
-		}
-		memcpy(line, newdir, 65);
-		eof = 1;  /* Now it is flag of project directory. */
-		while (line[0]) {
-			serveDir(newdir, &files, create, commit);
-			if (config && fgets(line, 65, config)) {
+			neof=0!=fgets(line, 65, config);
+			line[0] = (char)0;
+                        while (neof) {
+				if (0==strncmp(line, "---", 3)) state=2;
+				neof = detectPartition(line);
+				if (neof != 2) {state = neof; line[0]=(char)0;}
+				if (state & (char)0xFE) line[0]=(char)0;
 				srch = line;
-				while (*srch && (*srch == '\t' || *srch == ' ')) ++srch;
+				while (*srch == '\t' || *srch == ' ') ++srch;
 				if (srch != line && *srch) {
 					memcpy(newdir, srch, 65+line-srch);
 					srch = strchrs(newdir, "\n\r");
@@ -152,16 +158,17 @@ int main(argc, argv)
 					}
 					chdir(newdir);
 					getcwd(newdir, 64);
-					eof = (char)0;
-				} else {
+					serveDir(state, newdir, &files, create, commit);
 					line[0] = (char)0;
-					smartClose(&config);
 				}
-			} else {
-				line[0] = (char)0;
-				smartClose(&config);
+				neof=0!=fgets(line, 65, config);       			
 			}
+			fclose(config);
 		}
+
+		/* Config is absent or invalid */
+		if (state==3) serveDir(state, newdir, &files, create, commit);
+
 		chdir(olddir);
 		chpdrv(argv[1]);
 		getcwd(olddir, 64);
@@ -172,17 +179,20 @@ int main(argc, argv)
 		while (*srch) ++srch;
 		while (*srch != '\\' && srch != argv[0]) --srch;
 		*srch = (char)0;
-		fprintf(create, "copy %s\commit.bat h:\n", argv[0]);
-		fprintf(create, "h:\ndel /P %s\\_create.bat\n", newdir);
+		fprintf(create, "copy %s\\commit.bat h:\n", argv[0]);
+		fprintf(create, "h: \n del /P %s\\_create.bat\n", argv[0]);
 		fprintf(commit, "%%1 ramdisk /d 0\n");
 		if ((char)-1 != getpdrv(newdir)) {
 			newdir[2] = (char)0;
 			fprintf(commit, "%%1 %s\n", newdir);
 		}
-		fclose(commit);
-		fclose(create);
-		smartClose(&config);
+		close(create);
+		close(commit);
+		create = 0;
+		commit = 0;
 	} else {
+		smartClose(commit);
+		smartClose(create);
 		printf("Failed to create batch files.");
 	}
 	printf("%d files to copy.\n", files);
