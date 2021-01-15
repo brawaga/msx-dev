@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <bdosfunc.h>
 
-char *constCreate = "_CREATE.BAT";
+char *constCreate = "H:_CREATE.BAT";
 char *constMask = "*.*";
 
 char chdrv(no)
@@ -84,7 +84,7 @@ char serveDir(isproject, newdir, files, create, commit)
 		printf("\tPreparing to copy: %s\n", finfo.name);
 
 		/* Skipping _CREATE.BAT file */
-		if (strcmp(finfo.name, constCreate)) {
+		if (strcmp(finfo.name, &(constCreate[2]))) {
 			++*files;
 			fprintf(
 				create,
@@ -180,7 +180,7 @@ int main(argc, argv)
 		while (*srch != '\\' && srch != argv[0]) --srch;
 		*srch = (char)0;
 		fprintf(create, "copy %s\\commit.bat h:\n", argv[0]);
-		fprintf(create, "h: \n del /P %s\\_create.bat\n", argv[0]);
+		fprintf(create, "h: \n del /P _create.bat\n");
 		fprintf(commit, "%%1 ramdisk /d 0\n");
 		if ((char)-1 != getpdrv(newdir)) {
 			newdir[2] = (char)0;
@@ -193,7 +193,7 @@ int main(argc, argv)
 	} else {
 		smartClose(commit);
 		smartClose(create);
-		printf("Failed to create batch files.");
+		printf("Failed to create batch files.\n");
 	}
 	printf("%d files to copy.\n", files);
 	chdir(olddir);
