@@ -1,11 +1,8 @@
-a:
-cd \dev\c\include
-cf -o%1 %1
-cd \dev\c\lib
-fpc %1 lib clib mlib crun
-cg -k -o%1 %1
-m80 =%1/z
-rem del %1.mac
-l80 a:\dev\c\lib\ck,%1,a:\dev\c\lib\clib/s,a:\dev\c\lib\crun/s,a:\dev\c\lib\cend,%1/n/e
+newest %1.rel %1.c
+%onerror% cf -o%1 %1
+%onerror% cg -k -o%1 %1
+%onerror% m80 =%1/z/m
+%onerror% del %1.mac
+newest %1.com %1.rel
+l80 %msxc%\lib\ck,%1,%msxc%\lib\clib/s,%msxc%\lib\crun/s,%msxc%\lib\cend,%1/n/y/e
 
-

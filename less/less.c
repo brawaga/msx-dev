@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <msxbios.h> 
 
 int main(argc, argv)
 	int argc;
@@ -16,7 +15,7 @@ int main(argc, argv)
 	if (f) {
 		result = fgets(line, 80, f);
 		i = ferror(f);
-		fprintf("Error: %d\n", i);
+		fprintf(stderr, "Error: %d\n", i);
 		while (result) {
 			if (lineCount) {
 				--lineCount;
@@ -25,7 +24,7 @@ int main(argc, argv)
 			} else {
 				char c;
 				fprintf(stderr, prompt);
-				c = chget();
+				c = getch();
 				switch(c) {
 				case 'K': case 'k': case 'L': case 'l':
 				case 'D': case 'd': case '1': case '!':
@@ -46,4 +45,3 @@ int main(argc, argv)
 	}
 }
 
-
