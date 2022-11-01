@@ -102,7 +102,7 @@ char main(argc, argv)
 	filename = *(arg = argv);
 	argn = argc;
 	if (!nextFN()) {
-		putsw("NEWEST arg1, arg2,...\nTreating all arguments as file names, checks arg1 represents the newest one, otherwise sets nonzero errorlevel (and the variable ERRORLEVEL).\nAlso sets auxillary variables ONOK and ONERROR for you can make conditional execution like this:\n\nNEWEST file1.ext file2.ext file3.ext\n%onok% echo file1.ext is the newest\n%onerror% echo file2.ext or file3.ext is the newest\n\nIf /i passed as a parameter, the utility will await file names from stdin, each on separate line.");
+		putsw("NEWEST arg1, arg2,...\nTreating all arguments as file names, checks arg1 represents the newest one, otherwise sets nonzero errorlevel (and the variable ERRORLEVEL).\nAlso sets auxillary variables ONOK and ONERROR for you can make conditional execution like this:\n\nNEWEST file1.ext file2.ext file3.ext\n%onok% echo file1.ext is the newest\n%onerror% echo file2.ext or file3.ext is the newest\n\nIf /i passed as a parameter (NOT TESTED), the utility will await file names from stdin, each on separate line.");
 		return 0;
 	}
    	printf("file name: %s\n", filename);

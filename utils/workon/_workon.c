@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <bdosfunc.h>
 
+#define detectPartition dtPttn
+#define serveDir srvDir
+#define smartClose smClos
+
 char *constCreate = "H:_CREATE.BAT";
 char *constMask = "*.*";
 
@@ -51,17 +55,24 @@ char smartClose(f)
 char detectPartition(line)
 	char *line;
 {
-	char *partsRaw="includes\0paths";
+	char *partsRaw="includes\0paths\0sources";
 	char cand, *l, *p;	
 	cand = (char)0;
-	while (cand < 2) {
+	p = partsRaw;
+	while (cand < 3) {
 		l=line;
-		p=(char *)partsRaw+(cand*9);
 		while(*l && *p && *l==*p) {++l; ++p;}
-		if (*p==(char)0 && *l==':') return cand;
-		++cand;
+		if (*l==':' && !*p) return cand;
+		while(*p) ++p;
+		++p; ++cand;
 	}
-	return cand;
+	return (char)-1;
+}
+
+char isDir(partit)
+	char partit;
+{
+	return partit == 0 || partit == 1;
 }
 
 char serveDir(isproject, newdir, files, create, commit)
@@ -121,7 +132,7 @@ int main(argc, argv)
 	char olddrv = *((char*)4);
 	char newdrv;
 	char neof;
-	char state=3;
+	char state=(char)-1;
 	int files=0;
 
 	olddir[64]=newdir[64]=line[64]=(char)0;
@@ -138,36 +149,43 @@ int main(argc, argv)
 			neof=0!=fgets(line, 65, config);
 			line[0] = (char)0;
                         while (neof) {
-				if (0==strncmp(line, "---", 3)) state=2;
+				if (0==strncmp(line, "---", 3)) state=(char)-1;
 				neof = detectPartition(line);
-				if (neof != 2) {state = neof; line[0]=(char)0;}
-				if (state & (char)0xFE) line[0]=(char)0;
+				if (neof != (char)-1) {state = neof; line[0]=(char)0;}
+				if (state == (char)-1) line[0]=(char)0;
 				srch = line;
 				while (*srch == '\t' || *srch == ' ') ++srch;
 				if (srch != line && *srch) {
-					memcpy(newdir, srch, 65+line-srch);
-					srch = strchrs(newdir, "\n\r");
-					*srch = (char)0;
-					newdrv = getpdrv(newdir);
-					chdir(olddir);
-					if (newdrv == (char)-1 || newdrv == *((char *)4)) {
-						chdir(argv[1]);
-					} else {
-						chpdrv(newdir);
-						getcwd(olddir, 64);
+					if (isDir(state)) {
+						printf("Dir: %d\n", (int)state);
+						memcpy(newdir, srch, 65+line-srch);
+						srch = strchrs(newdir, "\n\r");
+						*srch = (char)0;
+						newdrv = getpdrv(newdir);
+						chdir(olddir);
+						if (newdrv == (char)-1 || newdrv == *((char *)4)) {
+							chdir(argv[1]);
+						} else {
+							chpdrv(newdir);
+							getcwd(olddir, 64);
+						}
+						chdir(newdir);
+						getcwd(newdir, 64);
+						serveDir(state, newdir, &files, create, commit);
+					} else if (state==2) {
+						puts("2\n");
+						/* TODO handle sources */
+						/* build make.bat */
 					}
-					chdir(newdir);
-					getcwd(newdir, 64);
-					serveDir(state, newdir, &files, create, commit);
-					line[0] = (char)0;
-				}
+       					line[0] = (char)0;
+ 				}	
 				neof=0!=fgets(line, 65, config);       			
 			}
 			fclose(config);
 		}
 
 		/* Config is absent or invalid */
-		if (state==3) serveDir(state, newdir, &files, create, commit);
+		if (state==(char)-1) serveDir(state, newdir, &files, create, commit);
 
 		chdir(olddir);
 		chpdrv(argv[1]);

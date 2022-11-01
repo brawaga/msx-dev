@@ -1,0 +1,14 @@
+.Z80
+	PUBLIC swap32
+
+;	Subroutine	swap high and low words
+;	Inputs		DEHL value
+;	Outputs		DEHL value
+
+
+swap32:
+	EX	DE, HL
+	RET
+END
+
+
