@@ -41,7 +41,7 @@ int main(argc, argv)
 		}
 		if (argc>1) fclose(f);
 	} else {
-		printf("Error: input unavailable.\n");
+		fprintf(stderr, "Error: input unavailable.\n");
 	}
 }
 
