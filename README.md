@@ -18,7 +18,7 @@ set include=a:\msx-c\include
 ```
 The real paths may vary depending on how you store your files.
 Some of projects rely on pre-initial 32-bit support libs you can find here,
-and those want command2.com of version 2.4 at least to build without modification of make.bat, that's why that's recommended version.
+and those want command2.com of version 2.4 at least to build without modification of make.bat, that's why that's a recommended version.
 
 # Building
 Any utility compiles via calling make.bat with C source file name without extension given as an only param.
