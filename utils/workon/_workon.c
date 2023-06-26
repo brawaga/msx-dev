@@ -83,6 +83,7 @@ char serveDir(isproject, newdir, files, create, commit)
 {
 	XREG regs;
 	FIB finfo;
+	char *pcent = "%";
 	printf("Directory: %s\n", newdir);
 	finfo.fib_id = 0xFF;
 	regs.bc = 0x2340;
@@ -106,11 +107,14 @@ char serveDir(isproject, newdir, files, create, commit)
 			/* Rewriting project files only */
 			if (isproject) fprintf(
 				commit,
-				"echo copying %d\ncopy /P h:%s %s\\$.$\ndel /P %s\\%s\nren /P %s\\$.$ %s\n",
+				"file #%d\nnewest %s\\%s h:%s\n%sonok%s echo No changes\n%sonerror%s echo Copying\n%sonerror%s copy /P h:%s %s\\$.$\n%sonerror%s del /P %s\\%s\n%sonerror%s ren /P %s\\$.$ %s\n",
 				*files,
-				finfo.name, newdir,
-				newdir, finfo.name,
-				newdir, finfo.name
+				newdir, finfo.name, finfo.name,
+				pcent, pcent,
+				pcent, pcent,
+				pcent, pcent, finfo.name, newdir,
+				pcent, pcent, newdir, finfo.name,
+				pcent, pcent, newdir, finfo.name
 			);
 		}
 		regs.bc = 0x2341;
